@@ -27,6 +27,14 @@
     6: [1, 0, 0, 1, 1, 1]   /* o mesmo, com 100 ppm/K */
   };
 
+  /*
+   * A tolerância acompanha o número de faixas em vez de ser preservada na
+   * troca: resistor de 4 faixas é quase sempre ouro (±5%) e o de 5 é quase
+   * sempre marrom (±1%). Manter ouro ao passar para 5 faixas deixava o app
+   * mostrando a combinação errada na maioria dos casos.
+   */
+  var TOLERANCIA_PADRAO = { 4: 10, 5: 1, 6: 1 };
+
   var el = {
     entrada:      document.getElementById('valor'),
     tolerancia:   document.getElementById('tolerancia'),
@@ -157,6 +165,17 @@
     return cor.ppm + ' ppm/K';
   }
 
+  /* Amostra da cor + o valor por extenso, ao lado do rótulo da tira. */
+  function escreverEscolha(destino, cor, texto) {
+    destino.textContent = '';
+    if (!cor) { return; }
+    var amostra = document.createElement('span');
+    amostra.className = 'amostra amostra--' + cor.id;
+    if (cor.fill.charAt(0) === '#') { amostra.style.background = cor.fill; }
+    destino.appendChild(amostra);
+    destino.appendChild(document.createTextNode(texto + ' · ' + cor.nome));
+  }
+
   function preencherTabela(impossiveis) {
     el.tabela.textContent = '';
     estado.selecoes.forEach(function (id, indice) {
@@ -197,15 +216,14 @@
        diz qual é, sem obrigar a decorar a cor. */
     var corTol = Cores.por(estado.selecoes[nDig + 1]);
     tiraTolerancia.atualizar(estado.selecoes[nDig + 1]);
-    el.valorTol.textContent = corTol
-      ? '±' + Resistor.numero(corTol.tol) + '% · ' + corTol.nome
-      : '';
+    escreverEscolha(el.valorTol, corTol,
+      corTol ? '±' + Resistor.numero(corTol.tol) + '%' : '');
 
     el.blocoCoef.hidden = estado.modo !== 6;
     if (estado.modo === 6) {
       var corPpm = Cores.por(estado.selecoes[nDig + 2]);
       tiraCoeficiente.atualizar(estado.selecoes[nDig + 2]);
-      el.valorCoef.textContent = corPpm ? corPpm.ppm + ' ppm/K · ' + corPpm.nome : '';
+      escreverEscolha(el.valorCoef, corPpm, corPpm ? corPpm.ppm + ' ppm/K' : '');
     }
 
     /*
@@ -267,7 +285,6 @@
 
     var nDigAntes = Resistor.digitosDe(estado.modo);
     var leitura = Resistor.decodificar(estado.selecoes, estado.modo);
-    var idTolerancia = estado.selecoes[nDigAntes + 1];
     var idPpm = estado.modo === 6 ? estado.selecoes[nDigAntes + 2] : PPM_PADRAO;
 
     var nDigDepois = Resistor.digitosDe(novoModo);
@@ -283,8 +300,7 @@
     }
     if (!novas) { novas = PADROES[novoModo].slice(0, nDigDepois + 1); }
 
-    novas.push(idTolerancia === null || idTolerancia === undefined
-      ? PADROES[novoModo][nDigDepois + 1] : idTolerancia);
+    novas.push(TOLERANCIA_PADRAO[novoModo]);
     if (novoModo === 6) {
       novas.push(idPpm === null || idPpm === undefined ? PPM_PADRAO : idPpm);
     }
@@ -319,9 +335,11 @@
 
     var nDig = Resistor.digitosDe(estado.modo);
     var novas = resultado.faixas.slice();
+    /* Digitar um valor muda os dígitos, não a tolerância que a pessoa
+       escolheu — só repõe o padrão se ela estiver vazia. */
     var idTolerancia = estado.selecoes[nDig + 1];
     novas.push(idTolerancia === null || idTolerancia === undefined
-      ? PADROES[estado.modo][nDig + 1] : idTolerancia);
+      ? TOLERANCIA_PADRAO[estado.modo] : idTolerancia);
     if (estado.modo === 6) {
       var idPpm = estado.selecoes[nDig + 2];
       novas.push(idPpm === null || idPpm === undefined ? PPM_PADRAO : idPpm);

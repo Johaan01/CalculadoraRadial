@@ -77,7 +77,7 @@ body {
 .legenda-modo,
 #leitura-faixas thead th {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -92,7 +92,7 @@ body {
   background: transparent;
   color: var(--acento);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -117,7 +117,7 @@ main > * { width: 100%; }
   margin: 0;
   text-align: center;
   color: var(--texto-fraco);
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   line-height: 1.5;
 }
 
@@ -341,7 +341,7 @@ main > * { width: 100%; }
   margin: 0;
   text-align: center;
   color: var(--texto-fraco);
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -370,7 +370,7 @@ main > * { width: 100%; }
  */
 .tiras { display: flex; flex-direction: column; gap: 10px; }
 
-.tira { display: flex; flex-direction: column; gap: 6px; }
+.tira { display: flex; flex-direction: column; gap: 8px; }
 .tira[hidden] { display: none; }
 
 /* Unidades não são sigla: `ppm/K` em caixa alta viraria PPM/K. */
@@ -388,10 +388,13 @@ main > * { width: 100%; }
   text-transform: none;
   letter-spacing: 0;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.98rem;
   font-variant-numeric: tabular-nums;
   color: var(--acento);
+  white-space: nowrap;
 }
+
+.tira-valor .amostra { margin-right: 6px; vertical-align: -2px; }
 
 /* O número de colunas vem do JS: uma por cor da faixa. */
 .tira-cores { display: grid; gap: 3px; }
@@ -402,11 +405,11 @@ main > * { width: 100%; }
  * valendo se lê de longe, seja qual for a cor.
  */
 .pastilha {
-  padding: 10px 2px;
+  padding: 14px 2px;
   border: 2px solid transparent;
   border-radius: 0;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -438,7 +441,7 @@ main > * { width: 100%; }
 #leitura-faixas {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 #leitura-faixas th,
@@ -506,14 +509,14 @@ main > * { width: 100%; }
   background: var(--painel);
   color: var(--texto);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   cursor: pointer;
 }
 
 .btn-acao:hover { background: var(--painel-alto); border-color: var(--texto-fraco); }
 
 .recado {
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   color: var(--acento);
 }
 
@@ -523,7 +526,7 @@ main > * { width: 100%; }
   padding-top: 12px;
   border-top: 1px solid var(--linha);
   color: var(--texto-fraco);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .rodape p { margin: 0; }
@@ -545,7 +548,7 @@ main > * { width: 100%; }
      das margens da página. */
   .dial { width: 100%; margin-top: -26px; }
 
-  .pastilha { padding: 11px 4px; font-size: 0.8rem; }
+  .pastilha { padding: 16px 4px; font-size: 0.9rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

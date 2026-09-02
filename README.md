@@ -98,12 +98,29 @@ usando o motor JScript que já vem no Windows:
 cscript //Nologo teste/logica.js
 ```
 
+E uma conferência da publicação, que roda em qualquer sistema e é a mesma que o
+GitHub Actions executa antes de publicar:
+
+```
+python ferramentas/conferir-publicacao.py
+```
+
+Ela existe por causa de um erro que não aparece no navegador: `sw.js` faz
+`cache.addAll(ARQUIVOS)` na instalação, e se **um** item dessa lista responder
+404 a promessa inteira falha, o service worker nunca instala e o app deixa de
+ser instalável e de funcionar offline — sem nenhuma mensagem na tela. Renomear
+um arquivo e esquecer da lista basta para isso acontecer.
+
 ## Publicar no GitHub Pages
 
-1. Criar o repositório e enviar o conteúdo desta pasta na raiz.
-2. Em **Settings → Pages**, escolher *Deploy from a branch*, branch `main`,
-   pasta `/ (root)`.
-3. O site sai em `https://SEU-USUARIO.github.io/NOME-DO-REPO/`.
+A publicação é automática: `.github/workflows/publicar.yml` confere e publica a
+cada push na `main`.
+
+Falta um passo manual, feito uma vez só: em **Settings → Pages**, escolher
+**GitHub Actions** como *Source*. Se ficar em *Deploy from a branch*, o workflow
+roda mas o Pages continua servindo o branch, ignorando o resultado.
+
+O site sai em `https://SEU-USUARIO.github.io/NOME-DO-REPO/`.
 
 Todos os caminhos do projeto são relativos (`./sw.js`, `"start_url": "./"`).
 Isso não é detalhe de estilo: um site de projeto no GitHub Pages não fica na

@@ -1,0 +1,59 @@
+# Confere e publica o site no GitHub Pages a cada push na main.
+#
+# Para isto funcionar é preciso, uma vez só, ir em Settings -> Pages e
+# escolher "GitHub Actions" como origem (Source). Se ficar em "Deploy from a
+# branch", este workflow roda mas o Pages continua servindo o branch.
+
+name: Publicar no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Exigidas pelo actions/deploy-pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez, sem cancelar a que está em curso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  conferir:
+    name: Conferir a publicação
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      # Pega o erro que não aparece no navegador: um arquivo listado no
+      # precache do service worker que não existe mais faz cache.addAll()
+      # falhar inteiro, e o app deixa de ser instalável em silêncio.
+      - name: Conferir referências, manifest e service worker
+        run: python ferramentas/conferir-publicacao.py
+
+  publicar:
+    name: Publicar
+    needs: conferir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacao.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - id: publicacao
+        uses: actions/deploy-pages@v4
