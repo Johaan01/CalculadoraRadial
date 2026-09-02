@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Radial v11 - Digitação Bidirecional</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 3vh; 
+            box-sizing: border-box;
+            min-height: 100vh; 
+            margin: 0;
+            overflow-x: hidden; 
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2vh; 
+            width: 90vw; 
+            max-width: 800px; 
+        }
+
+        #resultado-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Transformado em input para permitir digitação */
+        #valor {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: clamp(2.5rem, 8vw, 4rem); 
+            font-weight: 800;
+            color: #00e676;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+            margin: 0;
+            line-height: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            caret-color: #00e676; /* Cor do cursor piscando */
+            transition: background 0.2s, border-radius 0.2s;
+        }
+
+        #valor:focus {
+            background: rgba(0, 230, 118, 0.05);
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #tolerancia {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: #b0bec5;
+            margin: 5px 0 0 0;
+        }
+
+        #resistor-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 320px; 
+            height: 90px;
+        }
+
+        #resistor-svg {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: center;
+        }
+
+        #potencia-bar {
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: center;
+            gap: 10px;
+            background-color: #1e1e1e;
+            padding: 8px 15px;
+            border-radius: 30px;
+            border: 1px solid #333;
+            z-index: 20;
+        }
+
+        .btn-pot {
+            background: none;
+            border: none;
+            color: #757575;
+            font-size: clamp(0.8rem, 2vw, 0.95rem);
+            font-weight: bold;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-pot:hover { color: #fff; }
+
+        .btn-pot.ativo {
+            background-color: #37474f;
+            color: #00e676;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        #svg-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; 
+        }
+
+        svg#calculadora {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .segmento-arco {
+            cursor: pointer;
+            transition: stroke-width 0.1s ease-out, opacity 0.1s;
+            stroke: #121212;
+            stroke-width: 2px;
+        }
+
+        .segmento-arco:hover {
+            stroke-width: 4px;
+            stroke: #fff;
+        }
+
+        .selecionado {
+            stroke: #fff;
+            stroke-width: 4px;
+            z-index: 10;
+            filter: brightness(1.2);
+        }
+
+        .texto-arco {
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+            font-size: clamp(12px, 2.5vw, 16px); 
+            pointer-events: none; 
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .controles {
+            position: absolute;
+            top: 33%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+            align-items: center;
+            pointer-events: none; 
+            z-index: 30;
+        }
+
+        button.btn-faixa {
+            pointer-events: auto; 
+            background-color: #2c3e50;
+            color: #eceff1;
+            border: 2px solid #34495e;
+            padding: 10px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            font-weight: bold;
+            transition: all 0.2s;
+            outline: none;
+            width: clamp(110px, 30vw, 130px);
+        }
+
+        button.btn-faixa:hover {
+            background-color: #34495e;
+        }
+
+        button.btn-faixa.ativo {
+            background-color: #00e676;
+            color: #121212;
+            border-color: #00e676;
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <svg width="0" height="0">
+        <defs>
+            <linearGradient id="gradOuro" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#BF953F" />
+                <stop offset="50%" style="stop-color:#FCF6BA" />
+                <stop offset="100%" style="stop-color:#B38728" />
+            </linearGradient>
+            <linearGradient id="gradPrata" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#E6E6E6" />
+                <stop offset="50%" style="stop-color:#8A8A8A" />
+                <stop offset="100%" style="stop-color:#E6E6E6" />
+            </linearGradient>
+            <linearGradient id="efeitoCilindro" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(255, 255, 255, 0.5)" />
+                <stop offset="20%" stop-color="rgba(255, 255, 255, 0.1)" />
+                <stop offset="70%" stop-color="rgba(0, 0, 0, 0)" />
+                <stop offset="100%" stop-color="rgba(0, 0, 0, 0.6)" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div id="app-container">
+        
+        <div id="resultado-container">
+            <input type="text" id="valor" value="0 Ω" autocomplete="off" spellcheck="false">
+            <p id="tolerancia">±0%</p>
+        </div>
+
+        <div id="resistor-wrapper">
+            <svg id="resistor-svg" viewBox="0 0 340 90">
+                <defs>
+                    <clipPath id="formato-resistor">
+                        <rect x="40" y="10" width="45" height="70" rx="15"/>
+                        <rect x="70" y="16" width="200" height="58"/>
+                        <rect x="255" y="10" width="45" height="70" rx="15"/>
+                    </clipPath>
+                </defs>
+
+                <line x1="0" y1="45" x2="50" y2="45" stroke="#9ca3af" stroke-width="8" stroke-linecap="round"/>
+                <line x1="290" y1="45" x2="340" y2="45" stroke="#9ca3af" stroke-width="8" stroke-linecap="round"/>
+
+                <g clip-path="url(#formato-resistor)">
+                    <rect id="corpo-resistor" x="30" y="0" width="280" height="90" fill="#d4a373" style="transition: fill 0.3s;"/>
+                    
+                    <rect id="b-vis-0" x="55" y="0" width="14" height="90" fill="transparent" style="transition: all 0.2s;"/>
+                    <rect id="b-vis-1" x="105" y="0" width="14" height="90" fill="transparent" style="transition: all 0.2s;"/>
+                    <rect id="b-vis-2" x="155" y="0" width="14" height="90" fill="transparent" style="transition: all 0.2s;"/>
+                    <rect id="b-vis-3" x="205" y="0" width="14" height="90" fill="transparent" style="transition: all 0.2s;"/>
+                    <rect id="b-vis-4" x="270" y="0" width="14" height="90" fill="transparent" style="transition: all 0.2s;"/>
+                    
+                    <rect x="30" y="0" width="280" height="90" fill="url(#efeitoCilindro)" pointer-events="none"/>
+                </g>
+            </svg>
+        </div>
+
+        <div id="potencia-bar">
+            <button class="btn-pot" onclick="setPotencia(0.8, '#d4a373', this)">1/8W</button>
+            <button class="btn-pot ativo" onclick="setPotencia(1.0, '#d4a373', this)">1/4W</button>
+            <button class="btn-pot" onclick="setPotencia(1.15, '#6c968c', this)">1/2W</button>
+            <button class="btn-pot" onclick="setPotencia(1.3, '#2b5a8f', this)">1W</button>
+        </div>
+
+        <div id="svg-container">
+            <svg id="calculadora" viewBox="0 0 800 600"></svg>
+            <div class="controles">
+                <button id="btn-4" class="btn-faixa ativo" onclick="setBandas(4)">4 FAIXAS</button>
+                <button id="btn-5" class="btn-faixa" onclick="setBandas(5)">5 FAIXAS</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const dadosCores = [
+            { id: 0, nome: "Preto", fill: "#1a1a1a", textCol: "#fff", val: 0, mult: 1, tol: null },
+            { id: 1, nome: "Marrom", fill: "#6d4c41", textCol: "#fff", val: 1, mult: 10, tol: 1 },
+            { id: 2, nome: "Vermelho", fill: "#d32f2f", textCol: "#fff", val: 2, mult: 100, tol: 2 },
+            { id: 3, nome: "Laranja", fill: "#ef6c00", textCol: "#fff", val: 3, mult: 1000, tol: null },
+            { id: 4, nome: "Amarelo", fill: "#fdd835", textCol: "#000", val: 4, mult: 10000, tol: null },
+            { id: 5, nome: "Verde", fill: "#43a047", textCol: "#fff", val: 5, mult: 100000, tol: 0.5 },
+            { id: 6, nome: "Azul", fill: "#1e88e5", textCol: "#fff", val: 6, mult: 1000000, tol: 0.25 },
+            { id: 7, nome: "Violeta", fill: "#8e24aa", textCol: "#fff", val: 7, mult: 10000000, tol: 0.1 },
+            { id: 8, nome: "Cinza", fill: "#757575", textCol: "#fff", val: 8, mult: null, tol: 0.05 },
+            { id: 9, nome: "Branco", fill: "#f5f5f5", textCol: "#000", val: 9, mult: null, tol: null },
+            { id: 10, nome: "Ouro", fill: "url(#gradOuro)", textCol: "#000", val: null, mult: 0.1, tol: 5 },
+            { id: 11, nome: "Prata", fill: "url(#gradPrata)", textCol: "#000", val: null, mult: 0.01, tol: 10 }
+        ];
+
+        const coresValor = dadosCores.filter(c => c.id <= 9).reverse();
+        const coresTolerancia = dadosCores.filter(c => c.tol !== null).reverse();
+
+        let numBandas = 4;
+        let selecoes = [1, 0, 2, 10]; 
+
+        const svg = document.getElementById('calculadora');
+        const CX = 400; 
+        const CY = 200; 
+
+        // --- SISTEMA DE ENTRADA BIDIRECIONAL ---
+        const inputValor = document.getElementById('valor');
+
+        // Escuta a tecla Enter
+        inputValor.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                this.blur(); // Tira o foco para disparar a mudança
+            }
+        });
+
+        // Dispara quando o usuário termina de digitar
+        inputValor.addEventListener('change', function() {
+            let valorNumerico = analisarTextoInput(this.value);
+            if (valorNumerico !== null && valorNumerico > 0) {
+                converterValorParaCores(valorNumerico);
+            } else {
+                calcular(); // Se digitou algo inválido, volta pro estado anterior
+            }
+        });
+
+        // Converte texto humano (ex: "4.7k", "1M") em número puro
+        function analisarTextoInput(texto) {
+            let str = texto.replace(/,/g, '.').replace(/\s/g, '').toLowerCase();
+            str = str.replace(/ω|ohms|ohm/g, ''); // Remove a unidade visual
+            
+            let multiplicador = 1;
+            if (str.includes('k')) { multiplicador = 1e3; str = str.replace('k', ''); }
+            else if (str.includes('m')) { multiplicador = 1e6; str = str.replace('m', ''); }
+            
+            let num = parseFloat(str);
+            if (!isNaN(num)) return num * multiplicador;
+            return null;
+        }
+
+        // Faz a engenharia reversa do número para preencher o array de cores
+        function converterValorParaCores(valor) {
+            let power, base, d1, d2, d3, multVal, multObj;
+
+            if (numBandas === 4) {
+                // Calcula a notação científica adequada para extrair 2 dígitos
+                power = Math.floor(Math.log10(valor)) - 1;
+                base = Math.round(valor / Math.pow(10, power));
+                
+                if (base === 100) { base = 10; power++; }
+                
+                d1 = Math.floor(base / 10);
+                d2 = base % 10;
+                multVal = Math.pow(10, power);
+
+            } else if (numBandas === 5) {
+                // Extrai 3 dígitos para o modo de 5 faixas
+                power = Math.floor(Math.log10(valor)) - 2;
+                base = Math.round(valor / Math.pow(10, power));
+                
+                if (base === 1000) { base = 100; power++; }
+                
+                d1 = Math.floor(base / 100);
+                d2 = Math.floor((base % 100) / 10);
+                d3 = base % 10;
+                multVal = Math.pow(10, power);
+            }
+
+            // Busca a cor correspondente ao multiplicador (com margem de erro por causa de casas decimais do JavaScript)
+            multObj = dadosCores.find(c => c.mult !== null && Math.abs(c.mult - multVal) < 1e-7);
+
+            if (multObj) {
+                if (numBandas === 4 && d1 <= 9 && d2 <= 9) {
+                    selecoes[0] = d1;
+                    selecoes[1] = d2;
+                    selecoes[2] = multObj.id;
+                    if (selecoes[3] === null) selecoes[3] = 10; // Ouro padrão
+                } else if (numBandas === 5 && d1 <= 9 && d2 <= 9 && d3 <= 9) {
+                    selecoes[0] = d1;
+                    selecoes[1] = d2;
+                    selecoes[2] = d3;
+                    selecoes[3] = multObj.id;
+                    if (selecoes[4] === null) selecoes[4] = 1; // Marrom padrão
+                } else {
+                    alert("Valor não representável com as faixas atuais.");
+                    return calcular();
+                }
+            } else {
+                alert("Multiplicador não encontrado para este valor.");
+                return calcular();
+            }
+
+            renderizar();
+            calcular();
+        }
+        // --- FIM DO SISTEMA BIDIRECIONAL ---
+
+        function setPotencia(escala, corCorpo, botaoClicado) {
+            document.getElementById('resistor-svg').style.transform = `scale(${escala})`;
+            document.getElementById('corpo-resistor').setAttribute('fill', corCorpo);
+            
+            document.querySelectorAll('.btn-pot').forEach(btn => btn.classList.remove('ativo'));
+            botaoClicado.classList.add('ativo');
+        }
+
+        function polarParaCartesiano(cx, cy, raio, anguloEmGraus) {
+            const anguloEmRadianos = (anguloEmGraus - 90) * Math.PI / 180.0;
+            return {
+                x: cx + (raio * Math.cos(anguloEmRadianos)),
+                y: cy + (raio * Math.sin(anguloEmRadianos))
+            };
+        }
+
+        function descreverArco(x, y, raioInterno, raioExterno, anguloInicial, anguloFinal) {
+            const inicioExt = polarParaCartesiano(x, y, raioExterno, anguloFinal);
+            const fimExt = polarParaCartesiano(x, y, raioExterno, anguloInicial);
+            const inicioInt = polarParaCartesiano(x, y, raioInterno, anguloFinal);
+            const fimInt = polarParaCartesiano(x, y, raioInterno, anguloInicial);
+            const largeArcFlag = anguloFinal - anguloInicial <= 180 ? "0" : "1";
+
+            return [
+                "M", inicioExt.x, inicioExt.y,
+                "A", raioExterno, raioExterno, 0, largeArcFlag, 0, fimExt.x, fimExt.y,
+                "L", fimInt.x, fimInt.y,
+                "A", raioInterno, raioInterno, 0, largeArcFlag, 1, inicioInt.x, inicioInt.y,
+                "Z"
+            ].join(" ");
+        }
+
+        function renderizar() {
+            svg.innerHTML = '';
+            
+            const anguloInicialBase = 60;
+            const anguloTotal = 240;
+            let raioAtual = 150;  
+            const espessuraAnel = 44; 
+            const gapTolerancia = 18; 
+
+            for (let i = 0; i < numBandas; i++) {
+                const isUltimaBanda = i === (numBandas - 1);
+                
+                if (isUltimaBanda) raioAtual += gapTolerancia;
+                
+                const raioInterno = raioAtual;
+                const raioExterno = raioInterno + espessuraAnel - 2; 
+                raioAtual += espessuraAnel;
+
+                let coresParaUsar = isUltimaBanda ? coresTolerancia : coresValor;
+                let anguloPorCor = anguloTotal / coresParaUsar.length;
+
+                coresParaUsar.forEach((corDados, indexNoGrid) => {
+                    const anguloInicial = anguloInicialBase + (indexNoGrid * anguloPorCor);
+                    const anguloFinal = anguloInicial + anguloPorCor;
+                    const anguloMeio = (anguloInicial + anguloFinal) / 2;
+                    const raioMeio = (raioInterno + raioExterno) / 2;
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", descreverArco(CX, CY, raioInterno, raioExterno, anguloInicial, anguloFinal));
+                    path.setAttribute("fill", corDados.fill);
+                    path.setAttribute("class", "segmento-arco");
+
+                    if (selecoes[i] === corDados.id) {
+                        path.classList.add("selecionado");
+                    }
+
+                    path.addEventListener("click", () => {
+                        selecoes[i] = (selecoes[i] === corDados.id) ? null : corDados.id;
+                        renderizar(); 
+                        calcular();   
+                    });
+                    
+                    svg.appendChild(path);
+
+                    if (!isUltimaBanda) {
+                        const posTexto = polarParaCartesiano(CX, CY, raioMeio, anguloMeio);
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("x", posTexto.x);
+                        text.setAttribute("y", posTexto.y);
+                        text.setAttribute("class", "texto-arco");
+                        text.setAttribute("fill", corDados.textCol); 
+                        
+                        let rotacaoTexto = anguloMeio > 180 ? anguloMeio + 90 : anguloMeio - 90;
+                        text.setAttribute("transform", `rotate(${rotacaoTexto}, ${posTexto.x}, ${posTexto.y})`);
+                        
+                        text.textContent = corDados.val;
+                        svg.appendChild(text);
+                    }
+                });
+            }
+        }
+
+        function setBandas(n) {
+            numBandas = n;
+            document.getElementById('btn-4').classList.toggle('ativo', n === 4);
+            document.getElementById('btn-5').classList.toggle('ativo', n === 5);
+
+            if (n === 4) selecoes = [1, 0, 2, 10];
+            if (n === 5) selecoes = [1, 0, 0, 1, 1];
+            
+            renderizar();
+            calcular();
+        }
+
+        function precise(num) {
+            return parseFloat(num.toPrecision(12));
+        }
+
+        function atualizarResistorVisual() {
+            const posicoesX = numBandas === 4 
+                ? [60, 115, 170, null, 270] 
+                : [60, 105, 150, 195, 270];
+
+            for(let i = 0; i < 5; i++) {
+                const rectBanda = document.getElementById(`b-vis-${i}`);
+                
+                if (i >= numBandas) {
+                    rectBanda.setAttribute("fill", "transparent");
+                    continue;
+                }
+
+                const xReal = numBandas === 4 && i === 3 ? posicoesX[4] : posicoesX[i];
+                rectBanda.setAttribute("x", xReal);
+
+                const idSelecionado = selecoes[i];
+                if (idSelecionado !== null) {
+                    const cor = dadosCores.find(c => c.id === idSelecionado);
+                    rectBanda.setAttribute("fill", cor.fill);
+                } else {
+                    rectBanda.setAttribute("fill", "rgba(0,0,0,0.1)"); 
+                }
+            }
+        }
+
+        function calcular() {
+            atualizarResistorVisual();
+            
+            const selecoesAtuais = selecoes.slice(0, numBandas);
+
+            if (selecoesAtuais.includes(null)) {
+                document.getElementById('valor').value = "--- Ω";
+                document.getElementById('valor').style.color = "#b0bec5";
+                document.getElementById('valor').style.textShadow = "none";
+                document.getElementById('tolerancia').innerText = "Preencha as faixas vazias";
+                return;
+            }
+
+            document.getElementById('valor').style.color = "#00e676";
+            document.getElementById('valor').style.textShadow = "0 0 10px rgba(0, 230, 118, 0.3)";
+
+            const s = selecoesAtuais.map(id => dadosCores.find(c => c.id === id));
+            let valorBase = 0, multiplicador = 1, tolerancia = 0;
+
+            if (numBandas === 4) {
+                valorBase = (s[0].val * 10) + s[1].val;
+                multiplicador = s[2].mult;
+                tolerancia = s[3].tol;
+            } else if (numBandas === 5) {
+                valorBase = (s[0].val * 100) + (s[1].val * 10) + s[2].val;
+                multiplicador = s[3].mult;
+                tolerancia = s[4].tol;
+            }
+
+            const resistenciaFinal = precise(valorBase * multiplicador);
+
+            let vFormatado = resistenciaFinal >= 1000000 ? precise(resistenciaFinal / 1000000) + " MΩ" :
+                             resistenciaFinal >= 1000 ? precise(resistenciaFinal / 1000) + " kΩ" :
+                             precise(resistenciaFinal) + " Ω";
+
+            // Agora atualiza o .value do input ao invés do innerText
+            document.getElementById('valor').value = vFormatado;
+            document.getElementById('tolerancia').innerText = `±${tolerancia}% (${s[numBandas-1].nome})`;
+        }
+
+        window.onload = () => {
+            renderizar();
+            calcular();
+        };
+        
+        window.addEventListener('resize', () => {
+            renderizar(); 
+        });
+    </script>
+</body>
+</html>

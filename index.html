@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora Radial de Resistores</title>
+<meta name="description" content="Leia e monte o código de cores de resistores em um mostrador radial: toque nas cores para ver o valor, ou digite o valor para ver as cores. Funciona sem internet.">
+<meta name="theme-color" content="#101214">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./assets/icons/icone-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="./assets/icons/icone-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./assets/icons/icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Resistores">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="./assets/css/estilo.css">
+</head>
+<body>
+
+<!-- Gradientes compartilhados pelos dois SVGs da página. Ficam num SVG de
+     tamanho zero para que `url(#gradOuro)` resolva em qualquer lugar. -->
+<svg class="defs-globais" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gradOuro" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bf953f"/>
+      <stop offset="50%" stop-color="#fcf6ba"/>
+      <stop offset="100%" stop-color="#b38728"/>
+    </linearGradient>
+    <linearGradient id="gradPrata" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e6e6e6"/>
+      <stop offset="50%" stop-color="#8a8a8a"/>
+      <stop offset="100%" stop-color="#e6e6e6"/>
+    </linearGradient>
+    <linearGradient id="efeitoCilindro" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+      <stop offset="20%" stop-color="rgba(255,255,255,0.10)"/>
+      <stop offset="70%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.55)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header class="cabecalho">
+  <h1>Resistores</h1>
+  <button type="button" id="instalar" class="btn-instalar" hidden>Instalar app</button>
+</header>
+
+<main>
+
+  <p class="dica">
+    Toque nas cores do mostrador, ou escreva o valor no centro dele —
+    <code>470</code>, <code>4k7</code>, <code>2M2</code>, <code>33R</code> —
+    e pressione Enter.
+  </p>
+
+  <figure class="resistor">
+    <svg id="resistor-svg" viewBox="0 0 340 110" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="formatoResistor">
+          <rect x="40" y="10" width="45" height="70" rx="15"/>
+          <rect x="70" y="16" width="200" height="58"/>
+          <rect x="255" y="10" width="45" height="70" rx="15"/>
+        </clipPath>
+      </defs>
+      <line class="terminal" x1="0" y1="45" x2="50" y2="45"/>
+      <line class="terminal" x1="290" y1="45" x2="340" y2="45"/>
+      <g clip-path="url(#formatoResistor)">
+        <rect id="corpo-resistor" x="30" y="0" width="280" height="90" fill="#d4a373"/>
+        <g id="faixas-resistor"></g>
+        <rect x="30" y="0" width="280" height="90" fill="url(#efeitoCilindro)" pointer-events="none"/>
+      </g>
+      <g id="rotulos-resistor"></g>
+    </svg>
+  </figure>
+
+  <!-- O mostrador e a leitura são uma peça só: os 120° livres no topo do
+       mostrador e o disco central existem para receber este HTML por cima. -->
+  <div class="dial">
+    <svg id="mostrador" viewBox="60 30 680 560" role="group"
+         aria-label="Mostrador radial: um anel por faixa do resistor"></svg>
+
+    <div class="sobreposicao">
+      <div class="leitura-central">
+        <label class="oculto" for="valor">Resistência</label>
+        <input type="text" id="valor" value="1 kΩ" autocomplete="off" autocapitalize="off"
+               spellcheck="false" enterkeyhint="done" inputmode="text">
+        <p id="tolerancia" class="tolerancia"></p>
+      </div>
+      <div class="controle-modo">
+        <p class="legenda-modo" id="legenda-modo">faixas</p>
+        <div id="seletor-modo" class="seletor seletor-modo" role="group"
+             aria-labelledby="legenda-modo"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Faixas que se escolhe uma vez: logo abaixo da roda, empilhadas, onde
+       custam uma tira fina em vez de um anel inteiro. -->
+  <div class="tiras">
+    <div class="tira">
+      <p class="tira-nome" id="nome-tolerancia">
+        Tolerância <small>%</small>
+        <span class="tira-valor" id="valor-tolerancia"></span>
+      </p>
+      <div id="tira-tolerancia" class="tira-cores" role="radiogroup"
+           aria-labelledby="nome-tolerancia"></div>
+    </div>
+    <div class="tira" id="bloco-coeficiente" hidden>
+      <p class="tira-nome" id="nome-coeficiente">
+        Coef. térmico <small>ppm/K</small>
+        <span class="tira-valor" id="valor-coeficiente"></span>
+      </p>
+      <div id="tira-coeficiente" class="tira-cores" role="radiogroup"
+           aria-labelledby="nome-coeficiente"></div>
+    </div>
+  </div>
+
+  <div id="avisos" class="avisos" role="status" aria-live="polite" hidden></div>
+
+  <p id="intervalo" class="intervalo"></p>
+
+  <section class="leitura-detalhada">
+    <h2>Leitura faixa a faixa</h2>
+    <table id="leitura-faixas">
+      <thead>
+        <tr>
+          <th scope="col">Faixa</th>
+          <th scope="col">Cor</th>
+          <th scope="col">Significado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <div class="acoes">
+    <button type="button" id="copiar-link" class="btn-acao">Copiar link</button>
+    <button type="button" id="limpar" class="btn-acao">Voltar ao padrão</button>
+    <span id="recado" class="recado" role="status" aria-live="polite"></span>
+  </div>
+
+</main>
+
+<footer class="rodape">
+  <p>
+    Código de cores conforme a IEC&nbsp;60062; valores comerciais conforme a
+    IEC&nbsp;60063 (séries E24 e E96).
+  </p>
+</footer>
+
+<script src="./assets/js/cores.js"></script>
+<script src="./assets/js/resistor.js"></script>
+<script src="./assets/js/mostrador.js"></script>
+<script src="./assets/js/faixas.js"></script>
+<script src="./assets/js/tiras.js"></script>
+<script src="./assets/js/app.js"></script>
+</body>
+</html>

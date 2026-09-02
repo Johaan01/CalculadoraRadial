@@ -1,0 +1,555 @@
+/*
+ * estilo.css — painel de instrumento: arestas retas, réguas finas, números
+ * tabulares. O arredondamento forte do protótipo (botões em cápsula de 25px)
+ * dava um ar de aplicativo de consumo que briga com a natureza da ferramenta.
+ *
+ * Escrito para o celular primeiro. A regra que orienta o resto: a leitura do
+ * valor e o mostrador têm de caber juntos numa tela de telefone, porque é
+ * inútil tocar numa cor e ter que rolar a página para descobrir o que deu.
+ * Por isso a leitura mora dentro do mostrador, e não acima dele.
+ */
+
+:root {
+  --fundo: #101214;
+  --painel: #181b1e;
+  --painel-alto: #1f2327;
+  --linha: #2c3237;
+  --linha-forte: #454b52;
+  --texto: #e6eaed;
+  --texto-fraco: #97a1a9;
+  --acento: #00e676;
+  --atencao: #ffb74d;
+  --erro: #ff7b72;
+  --foco: #ffffff;
+
+  --margem: 12px;
+  --fonte: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --fonte-num: 'Cascadia Mono', 'SF Mono', Consolas, 'Roboto Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 var(--margem) 32px;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+.defs-globais { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.oculto {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- cabeçalho */
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 10px 0 8px;
+  border-bottom: 1px solid var(--linha);
+}
+
+/*
+ * Todo rótulo de seção da página usa exatamente este tratamento: mesmo corpo,
+ * mesmo peso, mesmo espaçamento entre letras, mesma cor. Antes cada um tinha o
+ * seu (0,68 / 0,70 / 0,72 / 0,78rem, três espaçamentos diferentes), e a página
+ * parecia ter cinco níveis de hierarquia onde só existe um.
+ */
+.cabecalho h1,
+.tira-nome,
+.leitura-detalhada h2,
+.legenda-modo,
+#leitura-faixas thead th {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.btn-instalar {
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid var(--acento);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--acento);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-instalar:hover { background: rgba(0, 230, 118, 0.12); }
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+main > * { width: 100%; }
+
+/* ------------------------------------------------------------------ dica */
+
+.dica {
+  margin: 0;
+  text-align: center;
+  color: var(--texto-fraco);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.dica code {
+  padding: 1px 4px;
+  border: 1px solid var(--linha);
+  background: var(--painel);
+  font-family: var(--fonte-num);
+  font-size: 0.95em;
+  color: var(--texto);
+}
+
+/* ---------------------------------------------------------- o resistor */
+
+.resistor {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#resistor-svg { width: 100%; max-width: 260px; height: auto; }
+
+.terminal { stroke: #9ca3af; stroke-width: 8; stroke-linecap: round; }
+.faixa-resistor { transition: fill 0.25s; }
+
+/* Quem diz qual faixa é qual: sob o desenho, na ordem em que se lê o
+   componente na mão. No mostrador radial isso virava um leque diagonal. */
+.rotulo-faixa {
+  font-family: var(--fonte);
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--texto-fraco);
+  text-anchor: middle;
+}
+
+/* ------------------------------------------------------------ seletores */
+
+.seletor {
+  display: flex;
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha);
+}
+
+.btn-modo {
+  border: 0;
+  border-radius: 0;
+  background: var(--painel);
+  color: var(--texto-fraco);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-modo:hover { background: var(--painel-alto); color: var(--texto); }
+.btn-modo.ativo { background: var(--acento); color: #06130c; }
+
+.btn-modo:focus-visible,
+.btn-acao:focus-visible,
+.btn-instalar:focus-visible,
+.pastilha:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------- mostrador e leitura */
+
+/*
+ * `container-type: inline-size` faz a leitura escalar junto com o mostrador:
+ * as medidas em `cqw` são fração da largura do próprio mostrador, então o
+ * conjunto se comporta igual num celular de 360px e num monitor de 860px.
+ *
+ * No celular o mostrador ainda sangra até a borda da tela: os 24px das margens
+ * do corpo valem ~7% a mais de diâmetro, que é o que separa um anel legível de
+ * um ilegível no modo de 6 faixas. `main` centraliza, então o excesso
+ * transborda igual dos dois lados.
+ */
+.dial {
+  position: relative;
+  container-type: inline-size;
+  width: calc(100% + var(--margem) * 2);
+  /* Os ~56 unidades vazias no topo do viewBox não precisam virar espaço em
+     branco na página: puxar o mostrador para cima aproxima o desenho do
+     resistor da leitura, sem encostar em arco nenhum. */
+  margin-top: -16px;
+}
+
+#mostrador { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Deixa passar o toque para os arcos; só os controles reais recebem eventos. */
+.sobreposicao { position: absolute; inset: 0; pointer-events: none; }
+
+/*
+ * Fica na cunha livre do topo, o mais baixo que a cunha permite: quanto mais
+ * perto do centro, mais estreita ela é, e a partir daí a régua do campo
+ * encostaria no primeiro anel. 7% com 50% de largura é o limite útil.
+ */
+.leitura-central {
+  position: absolute;
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  text-align: center;
+  pointer-events: auto;
+}
+
+#valor {
+  display: block;
+  width: 100%;
+  padding: 0 4px 3px;
+  border: 0;
+  border-bottom: 1px dashed var(--linha-forte);
+  border-radius: 0;
+  background: transparent;
+  color: var(--acento);
+  font-family: var(--fonte-num);
+  font-size: clamp(1.55rem, 9cqw, 3.2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-align: center;
+  caret-color: var(--acento);
+}
+
+#valor:hover { border-bottom-color: var(--acento); }
+
+#valor:focus {
+  outline: none;
+  background: rgba(0, 230, 118, 0.07);
+  border-bottom: 1px solid var(--acento);
+}
+
+#valor.indefinido { color: var(--texto-fraco); }
+
+.tolerancia {
+  margin: 5px 0 0;
+  color: var(--texto-fraco);
+  font-size: clamp(0.7rem, 3cqw, 0.95rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+/*
+ * O seletor de faixas ocupa o disco vazio no centro do mostrador. Os botões
+ * são de um caractere só porque ali a largura livre é o diâmetro do disco —
+ * "4 faixas" por extenso não caberia num celular. O nome vem na legenda acima
+ * e no `aria-label` de cada botão.
+ */
+/*
+ * Legenda e botões num bloco só, centrado no disco. Ancorados em porcentagens
+ * separadas eles se aproximavam conforme a tela encolhia — a distância entre
+ * os dois é fixa em pixels, a posição do conjunto é que acompanha o mostrador.
+ */
+.controle-modo {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.seletor-modo .btn-modo {
+  padding: 0.5em 0.8em;
+  font-size: clamp(0.88rem, 2.4cqw, 1.3rem);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.1em;
+}
+
+.legenda-modo { white-space: nowrap; }
+
+.segmento {
+  cursor: pointer;
+  stroke: var(--linha-forte);
+  stroke-width: 1.5;
+  transition: filter 0.12s;
+}
+
+.segmento:hover { filter: brightness(1.3); }
+.segmento:focus { outline: none; }
+
+/* O foco de teclado se anuncia pelo brilho do arco, não por um contorno de
+   terceira cor: no mostrador, branco quer dizer escolhido e vermelho quer
+   dizer impossível, e mais nada. */
+.segmento:focus-visible {
+  outline: none;
+  filter: brightness(1.5) saturate(1.15);
+}
+
+.rotulo-arco {
+  font-family: var(--fonte);
+  font-weight: 700;
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* Contornos por cima de todos os arcos: SVG não tem z-index, então um
+   `stroke` no próprio arco seria coberto pelo vizinho desenhado depois. */
+.realce {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 4;
+  pointer-events: none;
+}
+
+/* Faixa escolhida que não pode existir num resistor real — hoje, preto no
+   primeiro dígito. O contorno vermelho é o aviso imediato; o texto embaixo
+   explica por quê. */
+.realce--erro { stroke: var(--erro); stroke-width: 5; }
+
+/* ------------------------------------------------------ abaixo do dial */
+
+.intervalo {
+  margin: 0;
+  text-align: center;
+  color: var(--texto-fraco);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Esta é a única voz do app quando ele muda alguma coisa por conta própria ou
+   quando a escolha não fecha. Tem que dar vontade de ler. */
+.avisos {
+  border-left: 3px solid var(--atencao);
+  background: var(--painel);
+  padding: 14px 16px;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--texto);
+}
+
+.avisos[hidden] { display: none; }
+.avisos p { margin: 0; }
+.avisos p + p { margin-top: 10px; }
+.avisos--erro { border-left-color: var(--erro); }
+
+/* ------------------------------------------ tiras de tolerância e ppm */
+
+/*
+ * As faixas que se escolhe uma vez. Fora do mostrador elas custam uma tira de
+ * ~34px de altura em vez de um anel inteiro; dentro dele, ocupavam a mesma
+ * área dos anéis de dígito, que mudam a toda hora.
+ */
+.tiras { display: flex; flex-direction: column; gap: 10px; }
+
+.tira { display: flex; flex-direction: column; gap: 6px; }
+.tira[hidden] { display: none; }
+
+/* Unidades não são sigla: `ppm/K` em caixa alta viraria PPM/K. */
+.tira-nome small {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* O que está escolhido, escrito por extenso ao lado do rótulo — a pastilha
+   marcada sozinha não bastava para dizer qual tolerância está valendo. */
+.tira-valor {
+  margin-left: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--acento);
+}
+
+/* O número de colunas vem do JS: uma por cor da faixa. */
+.tira-cores { display: grid; gap: 3px; }
+
+/*
+ * As não escolhidas ficam apagadas. Um contorno branco sozinho sumia nas
+ * pastilhas claras (prata, ouro, branco); com as outras esmaecidas, qual está
+ * valendo se lê de longe, seja qual for a cor.
+ */
+.pastilha {
+  padding: 10px 2px;
+  border: 2px solid transparent;
+  border-radius: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.38;
+  transition: opacity 0.12s;
+}
+
+.pastilha--10 { background: linear-gradient(135deg, #bf953f, #fcf6ba 50%, #b38728); }
+.pastilha--11 { background: linear-gradient(135deg, #e6e6e6, #8a8a8a 50%, #e6e6e6); }
+
+.pastilha:hover { opacity: 0.75; }
+
+.pastilha.ativo {
+  opacity: 1;
+  border-color: #ffffff;
+  /* Anel na cor do fundo por fora da borda, para o branco não se confundir
+     com a pastilha vizinha. */
+  box-shadow: 0 0 0 2px var(--fundo);
+}
+
+/* ---------------------------------------------------- leitura detalhada */
+
+.leitura-detalhada h2 {
+  margin: 6px 0 6px;
+}
+
+#leitura-faixas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+#leitura-faixas th,
+#leitura-faixas td {
+  padding: 7px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--linha);
+}
+
+#leitura-faixas thead th { border-bottom-color: var(--linha-forte); }
+
+#leitura-faixas tbody th {
+  font-weight: 500;
+  color: var(--texto-fraco);
+  white-space: nowrap;
+}
+
+#leitura-faixas tbody td:last-child {
+  font-family: var(--fonte-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--acento);
+  white-space: nowrap;
+}
+
+.amostra {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 1px solid var(--linha-forte);
+  background: transparent;
+}
+
+.amostra--10 { background: linear-gradient(135deg, #bf953f, #fcf6ba 50%, #b38728); }
+.amostra--11 { background: linear-gradient(135deg, #e6e6e6, #8a8a8a 50%, #e6e6e6); }
+.amostra--vazia { background: repeating-linear-gradient(45deg, transparent, transparent 3px, var(--linha-forte) 3px, var(--linha-forte) 4px); }
+
+/* Mesma marcação vermelha do contorno no mostrador, para a linha da faixa
+   que não pode existir. */
+#leitura-faixas tbody tr.linha-impossivel th,
+#leitura-faixas tbody tr.linha-impossivel td {
+  background: rgba(255, 123, 114, 0.09);
+}
+
+#leitura-faixas tbody tr.linha-impossivel th {
+  box-shadow: inset 3px 0 0 var(--erro);
+  color: var(--erro);
+}
+
+/* -------------------------------------------------------------- ações */
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.btn-acao {
+  padding: 8px 14px;
+  border: 1px solid var(--linha-forte);
+  border-radius: 2px;
+  background: var(--painel);
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.btn-acao:hover { background: var(--painel-alto); border-color: var(--texto-fraco); }
+
+.recado {
+  font-size: 0.8rem;
+  color: var(--acento);
+}
+
+.rodape {
+  max-width: 860px;
+  margin: 28px auto 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--linha);
+  color: var(--texto-fraco);
+  font-size: 0.75rem;
+}
+
+.rodape p { margin: 0; }
+
+/* --------------------------------------------------------------- telas */
+
+@media (min-width: 700px) {
+  :root { --margem: 16px; }
+
+  main { gap: 16px; padding-top: 16px; }
+
+  .cabecalho { padding: 18px 0 12px; }
+
+  .dica { font-size: 0.85rem; }
+
+  #resistor-svg { max-width: 340px; }
+
+  /* No desktop não há aperto de largura: o mostrador volta para dentro
+     das margens da página. */
+  .dial { width: 100%; margin-top: -26px; }
+
+  .pastilha { padding: 11px 4px; font-size: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faixa-resistor,
+  .pastilha,
+  .segmento { transition: none; }
+}

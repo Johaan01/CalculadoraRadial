@@ -1,0 +1,3 @@
+# O repositório guarda tudo em LF; o checkout no Windows fica a critério do Git.
+* text=auto eol=lf
+*.png binary
