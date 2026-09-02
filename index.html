@@ -77,7 +77,7 @@
   <!-- O mostrador e a leitura são uma peça só: os 120° livres no topo do
        mostrador e o disco central existem para receber este HTML por cima. -->
   <div class="dial">
-    <svg id="mostrador" viewBox="60 30 680 560" role="group"
+    <svg id="mostrador" viewBox="60 30 680 640" role="group"
          aria-label="Mostrador radial: um anel por faixa do resistor"></svg>
 
     <div class="sobreposicao">
@@ -88,24 +88,17 @@
         <p id="tolerancia" class="tolerancia"></p>
       </div>
       <div class="controle-modo">
-        <p class="legenda-modo" id="legenda-modo">faixas</p>
         <div id="seletor-modo" class="seletor seletor-modo" role="group"
              aria-labelledby="legenda-modo"></div>
+        <p class="legenda-modo" id="legenda-modo">faixas</p>
       </div>
     </div>
   </div>
 
-  <!-- Faixas que se escolhe uma vez: logo abaixo da roda, empilhadas, onde
-       custam uma tira fina em vez de um anel inteiro. -->
+  <!-- O coeficiente térmico só existe no modo de 6 faixas e quase nunca é
+       consultado; fica numa tira aqui embaixo. A tolerância, que faz parte de
+       toda leitura, voltou para o arco externo do mostrador. -->
   <div class="tiras">
-    <div class="tira">
-      <p class="tira-nome" id="nome-tolerancia">
-        Tolerância <small>%</small>
-        <span class="tira-valor" id="valor-tolerancia"></span>
-      </p>
-      <div id="tira-tolerancia" class="tira-cores" role="radiogroup"
-           aria-labelledby="nome-tolerancia"></div>
-    </div>
     <div class="tira" id="bloco-coeficiente" hidden>
       <p class="tira-nome" id="nome-coeficiente">
         Coef. térmico <small>ppm/K</small>

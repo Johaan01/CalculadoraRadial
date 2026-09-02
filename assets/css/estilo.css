@@ -219,7 +219,7 @@ main > * { width: 100%; }
  */
 .leitura-central {
   position: absolute;
-  top: 7%;
+  top: 6.5%;
   left: 50%;
   transform: translateX(-50%);
   width: 50%;
@@ -270,30 +270,34 @@ main > * { width: 100%; }
  * e no `aria-label` de cada botão.
  */
 /*
- * Legenda e botões num bloco só, centrado no disco. Ancorados em porcentagens
- * separadas eles se aproximavam conforme a tela encolhia — a distância entre
- * os dois é fixa em pixels, a posição do conjunto é que acompanha o mostrador.
+ * Os botões ficam centrados no centro do mostrador (34,4% é onde ele cai no
+ * viewBox). O disco livre tem só 120 unidades de raio: a poucos pixels do
+ * centro ele já é estreito demais para a fileira de botões, então quem manda
+ * na posição é a fileira, e a legenda sai do fluxo para não deslocá-la.
  */
 .controle-modo {
   position: absolute;
-  top: 40%;
+  top: 34.4%;
   left: 50%;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
   pointer-events: auto;
 }
 
 .seletor-modo .btn-modo {
-  padding: 0.5em 0.8em;
-  font-size: clamp(0.88rem, 2.4cqw, 1.3rem);
+  padding: 0.55em 0.85em;
+  font-size: clamp(0.95rem, 2.6cqw, 1.4rem);
   font-variant-numeric: tabular-nums;
-  min-width: 2.1em;
+  min-width: 2.15em;
 }
 
-.legenda-modo { white-space: nowrap; }
+/* Fora do fluxo, logo abaixo da fileira: só nomeia os botões. */
+.legenda-modo {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
 
 .segmento {
   cursor: pointer;
@@ -311,6 +315,20 @@ main > * { width: 100%; }
 .segmento:focus-visible {
   outline: none;
   filter: brightness(1.5) saturate(1.15);
+}
+
+/* O nome de uma banda inteira, curvado junto com ela: hoje só a tolerância
+   precisa de um, por ser a única que não encosta nas outras. O corpo é
+   limitado pelo vão de 26 unidades em que ele mora. */
+.rotulo-banda {
+  font-family: var(--fonte);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--texto-fraco);
+  text-anchor: middle;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 .rotulo-arco {

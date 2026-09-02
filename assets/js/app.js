@@ -7,9 +7,10 @@
  *
  * `estado.selecoes` sempre tem uma entrada por faixa do componente, na ordem
  * em que se lê o resistor: dígitos, multiplicador, tolerância e, no modo de 6
- * faixas, coeficiente térmico. Quem edita as primeiras é o mostrador radial;
- * as duas últimas são as tiras abaixo dele. Os índices são os mesmos para
- * todos.
+ * faixas, coeficiente térmico. O mostrador desenha as quatro primeiras — os
+ * dígitos e o multiplicador nos anéis concêntricos, a tolerância no arco
+ * externo de baixo. Só o coeficiente térmico fica numa tira fora dele. Os
+ * índices são os mesmos em todas as peças.
  */
 (function () {
   'use strict';
@@ -45,10 +46,8 @@
     grupoRotulos: document.getElementById('rotulos-resistor'),
     mostrador:    document.getElementById('mostrador'),
     seletorModo:  document.getElementById('seletor-modo'),
-    tiraTol:      document.getElementById('tira-tolerancia'),
     tiraCoef:     document.getElementById('tira-coeficiente'),
     blocoCoef:    document.getElementById('bloco-coeficiente'),
-    valorTol:     document.getElementById('valor-tolerancia'),
     valorCoef:    document.getElementById('valor-coeficiente'),
     tabela:       document.querySelector('#leitura-faixas tbody'),
     botaoLink:    document.getElementById('copiar-link'),
@@ -60,7 +59,6 @@
 
   var mostrador = window.criarMostrador(el.mostrador, escolher);
   var desenho = window.criarDesenho(el.grupoFaixas, el.grupoRotulos);
-  var tiraTolerancia = window.criarTira(el.tiraTol, escolherTolerancia);
   var tiraCoeficiente = window.criarTira(el.tiraCoef, escolherCoeficiente);
 
   /* ---------------------------------------------------------------- estado */
@@ -212,13 +210,6 @@
     mostrador.atualizar(estado.selecoes, leitura.impossiveis);
     preencherTabela(leitura.impossiveis);
 
-    /* A pastilha marcada diz onde está a escolha; o texto ao lado do rótulo
-       diz qual é, sem obrigar a decorar a cor. */
-    var corTol = Cores.por(estado.selecoes[nDig + 1]);
-    tiraTolerancia.atualizar(estado.selecoes[nDig + 1]);
-    escreverEscolha(el.valorTol, corTol,
-      corTol ? '±' + Resistor.numero(corTol.tol) + '%' : '');
-
     el.blocoCoef.hidden = estado.modo !== 6;
     if (estado.modo === 6) {
       var corPpm = Cores.por(estado.selecoes[nDig + 2]);
@@ -240,10 +231,12 @@
       el.entrada.value = Resistor.formatar(leitura.ohms);
       el.entrada.classList.remove('indefinido');
 
-      /* Só a tolerância. O coeficiente térmico não muda o valor do resistor —
-         não tem por que disputar espaço com ele na leitura principal; fica na
-         tira própria e na tabela. */
-      el.tolerancia.textContent = '±' + Resistor.numero(leitura.tolerancia) + '%';
+      /* Só a tolerância, com o nome da cor: ela é escolhida no arco de baixo
+         do mostrador e essa linha é o retorno de que a escolha valeu. O
+         coeficiente térmico não muda o valor do resistor e fica de fora. */
+      var corTol = Cores.por(estado.selecoes[nDig + 1]);
+      el.tolerancia.textContent = '±' + Resistor.numero(leitura.tolerancia)
+        + '% · ' + corTol.nome;
 
       var margem = leitura.ohms * leitura.tolerancia / 100;
       el.intervalo.textContent = 'Na tolerância, o resistor real está entre '
@@ -257,15 +250,16 @@
 
   /* ------------------------------------------------------------------ ações */
 
+  /*
+   * Clicar de novo na cor já escolhida esvazia a faixa — menos na tolerância,
+   * que todo resistor tem: lá o clique repetido não faz nada, em vez de deixar
+   * a leitura incompleta por acidente.
+   */
   function escolher(indiceAnel, corId, forcar) {
+    var ehTolerancia = indiceAnel === Resistor.digitosDe(estado.modo) + 1;
     var atual = estado.selecoes[indiceAnel];
-    estado.selecoes[indiceAnel] = (!forcar && atual === corId) ? null : corId;
-    renderizar();
-  }
-
-  /* Tolerância e coeficiente são obrigatórios: a tira só troca, nunca esvazia. */
-  function escolherTolerancia(corId) {
-    estado.selecoes[Resistor.digitosDe(estado.modo) + 1] = corId;
+    var desmarcando = !forcar && atual === corId;
+    estado.selecoes[indiceAnel] = (desmarcando && !ehTolerancia) ? null : corId;
     renderizar();
   }
 
@@ -381,11 +375,6 @@
   }
 
   function montarTiras() {
-    tiraTolerancia.montar(
-      Cores.tolerancias,
-      function (c) { return Resistor.numero(c.tol); },
-      function (c) { return 'tolerância de ±' + Resistor.numero(c.tol) + '%'; }
-    );
     tiraCoeficiente.montar(
       Cores.coeficientes,
       function (c) { return String(c.ppm); },

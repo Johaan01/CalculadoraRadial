@@ -12,7 +12,7 @@
  * "/sw.js" apontaria para a raiz do domínio, fora do escopo.
  */
 
-var VERSAO = 'v6';
+var VERSAO = 'v9';
 var CACHE = 'calculadora-resistores-' + VERSAO;
 
 var ARQUIVOS = [
