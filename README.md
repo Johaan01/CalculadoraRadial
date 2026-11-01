@@ -5,6 +5,9 @@ do componente; clicar nas cores mostra o valor, e digitar o valor acende as
 cores. Funciona em 4, 5 e 6 faixas, e funciona sem internet depois da primeira
 visita.
 
+**Usar agora:** <https://johaan01.github.io/CalculadoraRadial/> — no celular dá
+para instalar como app (veja [Instalar como app](#instalar-como-app)).
+
 ## Estrutura
 
 ```
@@ -82,7 +85,8 @@ testar a instalação e o funcionamento offline é preciso um servidor, porque
 service workers não existem em `file://`:
 
 ```
-cd "Calculadora Radial Eletronica"
+git clone https://github.com/Johaan01/CalculadoraRadial.git
+cd CalculadoraRadial
 python -m http.server 8080
 ```
 
@@ -116,11 +120,11 @@ um arquivo e esquecer da lista basta para isso acontecer.
 A publicação é automática: `.github/workflows/publicar.yml` confere e publica a
 cada push na `main`.
 
-Falta um passo manual, feito uma vez só: em **Settings → Pages**, escolher
-**GitHub Actions** como *Source*. Se ficar em *Deploy from a branch*, o workflow
+Em **Settings → Pages**, a origem (*Source*) precisa estar em **GitHub
+Actions** — já está assim. Se voltar para *Deploy from a branch*, o workflow
 roda mas o Pages continua servindo o branch, ignorando o resultado.
 
-O site sai em `https://SEU-USUARIO.github.io/NOME-DO-REPO/`.
+O site está em <https://johaan01.github.io/CalculadoraRadial/>.
 
 Todos os caminhos do projeto são relativos (`./sw.js`, `"start_url": "./"`).
 Isso não é detalhe de estilo: um site de projeto no GitHub Pages não fica na
@@ -148,3 +152,7 @@ Depois de instalado, o app abre em janela própria e funciona sem rede.
 
 - IEC 60062 — marcação de resistores e capacitores por código de cores.
 - IEC 60063 — séries de valores preferenciais (E24, E96).
+
+## Licença
+
+[MIT](LICENSE).
