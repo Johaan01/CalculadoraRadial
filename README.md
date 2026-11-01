@@ -5,7 +5,7 @@ do componente; clicar nas cores mostra o valor, e digitar o valor acende as
 cores. Funciona em 4, 5 e 6 faixas, e funciona sem internet depois da primeira
 visita.
 
-**Usar agora:** <https://johaan01.github.io/CalculadoraRadial/> — no celular dá
+**Usar agora:** <https://joaohauch.github.io/CalculadoraRadial/> — no celular dá
 para instalar como app (veja [Instalar como app](#instalar-como-app)).
 
 ## Estrutura
@@ -85,7 +85,7 @@ testar a instalação e o funcionamento offline é preciso um servidor, porque
 service workers não existem em `file://`:
 
 ```
-git clone https://github.com/Johaan01/CalculadoraRadial.git
+git clone https://github.com/joaohauch/CalculadoraRadial.git
 cd CalculadoraRadial
 python -m http.server 8080
 ```
@@ -124,7 +124,7 @@ Em **Settings → Pages**, a origem (*Source*) precisa estar em **GitHub
 Actions** — já está assim. Se voltar para *Deploy from a branch*, o workflow
 roda mas o Pages continua servindo o branch, ignorando o resultado.
 
-O site está em <https://johaan01.github.io/CalculadoraRadial/>.
+O site está em <https://joaohauch.github.io/CalculadoraRadial/>.
 
 Todos os caminhos do projeto são relativos (`./sw.js`, `"start_url": "./"`).
 Isso não é detalhe de estilo: um site de projeto no GitHub Pages não fica na
